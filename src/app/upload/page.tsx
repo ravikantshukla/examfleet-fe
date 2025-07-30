@@ -1,8 +1,8 @@
 "use client";
 
-// Force dynamic rendering because this page uses Firebase Auth on the
-// client.  Without this directive Next.js would attempt to pre‑render
-// the page during the build phase.
+// Disable static generation for the upload page.  This page relies on
+// client‑side Firebase authentication and therefore cannot be pre‑rendered
+// on the server.
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, DragEvent } from 'react';

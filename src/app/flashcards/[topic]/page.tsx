@@ -1,6 +1,8 @@
 "use client";
 
-// Prevent static rendering because this page depends on Firebase Auth.
+// Disable static rendering for flashcards because the component uses
+// client‑side Firebase authentication.  If Next.js attempted to
+// prerender this page at build time it would throw an invalid API key error.
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';

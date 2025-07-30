@@ -1,6 +1,8 @@
 "use client";
 
-// This page uses client‑side Firebase auth; disable static pre‑render.
+// Force dynamic rendering because this page depends on client‑side
+// authentication via Firebase.  Static rendering would result in build
+// failures due to missing API keys.
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
