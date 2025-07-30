@@ -7,29 +7,6 @@ import Link from 'next/link';
  * It also encourages users to explore premium plans for unlimited access.
  */
 export default function Home() {
-  // Sample notifications for demonstration.  In a real application these
-  // would be fetched from an API or content management system.
-  const notifications = [
-    {
-      title: 'UPSC CSE 2024 Prelims Result Announced',
-      date: '25 July 2025',
-      description:
-        'Check your result on the official UPSC portal. Congratulations to all qualifiers!',
-    },
-    {
-      title: 'SSC CGL Tier I 2024 Admit Card Released',
-      date: '1 June 2025',
-      description:
-        'Download your admit card from the SSC website and verify your exam centre details.',
-    },
-    {
-      title: 'Banking Exams Calendar Updated',
-      date: '15 May 2025',
-      description:
-        'IBPS has updated the exam schedule for PO and Clerk exams. View dates here.',
-    },
-  ];
-
   return (
     <main className="p-4 md:p-8 max-w-6xl mx-auto space-y-12">
       {/* Hero section */}
@@ -49,22 +26,6 @@ export default function Home() {
         </Link>
       </section>
 
-      {/* Notifications section */}
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Latest Notifications</h2>
-        <ul className="space-y-3">
-          {notifications.map((note) => (
-            <li
-              key={note.title}
-              className="border p-4 rounded-md hover:bg-gray-50 transition"
-            >
-              <h3 className="font-medium text-lg mb-1">{note.title}</h3>
-              <p className="text-sm text-gray-500 mb-1">{note.date}</p>
-              <p className="text-gray-600 text-sm">{note.description}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
 
       {/* Previous year papers section */}
       <section>
