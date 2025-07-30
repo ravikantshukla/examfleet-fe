@@ -1,48 +1,46 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+// This page uses client‑side Firebase auth; disable static pre‑render.
+export const dynamic = 'force-dynamic';
 
-const topics = [
-  "Mathematics",
-  "Physics",
-  "Chemistry",
-  "Biology",
-  "General Knowledge",
-];
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import QuizForm from '@/components/ui/QuizForm';
 
-export default function QuizPage() {
+/**
+ * Dynamic route for taking a quiz on a specific topic.  It ensures the
+ * user is authenticated before allowing access and passes the topic ID
+ * down to the `QuizForm` component.  If the user is not logged in they
+ * are redirected to the login page.
+ */
+export default function TopicQuizPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const params = useParams();
+  const [userChecked, setUserChecked] = useState(false);
+  const topicId = Array.isArray(params?.topic)
+    ? params.topic[0]
+    : (params?.topic as string);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      if (!currentUser) router.push("/login");
+      if (!currentUser) {
+        router.push('/login');
+      }
+      setUserChecked(true);
     });
     return () => unsubscribe();
   }, [router]);
 
-  const handleTopicClick = (topic: string) => {
-    router.push(`/quiz/${encodeURIComponent(topic)}`);
-  };
+  if (!userChecked) {
+    return null;
+  }
 
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Choose a Quiz Topic</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {topics.map((topic) => (
-          <button
-            key={topic}
-            onClick={() => handleTopicClick(topic)}
-            className="w-full p-6 bg-white shadow border rounded hover:bg-blue-50 text-left"
-          >
-            <span className="text-lg font-semibold">{topic}</span>
-          </button>
-        ))}
-      </div>
+    <main className="p-6 max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4 capitalize">Quiz: {topicId.replaceAll('-', ' ')}</h1>
+      <QuizForm topicId={topicId} />
     </main>
   );
 }

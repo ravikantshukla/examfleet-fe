@@ -8,6 +8,10 @@ import { auth } from '@/lib/firebase';
 
 
 export default function Navbar() {
+  // Store the current Firebase user.  We intentionally type this as
+  // `any` because the full `User` type from Firebase contains many
+  // optional properties that are not used in this component.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
