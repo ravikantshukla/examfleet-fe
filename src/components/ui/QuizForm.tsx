@@ -3,6 +3,12 @@
 import { useEffect, useState } from 'react';
 import type { QuizQuestion } from '@/types';
 import { useProgressStore } from '@/store/useProgressStore';
+import { auth } from '@/lib/firebase';
+
+// Read the backend API base URL from the environment.  When deployed, this
+// should be set to the API Gateway invoke URL.  Local development may
+// leave this undefined, in which case submissions will not be persisted.
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface Props {
   /** The identifier of the topic to load questions for */
@@ -20,6 +26,8 @@ export default function QuizForm({ topicId }: Props) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
+  // Keep track of the user's answers in order to submit them to the backend
+  const [userAnswers, setUserAnswers] = useState<string[]>([]);
   const [score, setScore] = useState<number | null>(null);
   const { gainXp, incrementQuizzes } = useProgressStore();
 
@@ -47,6 +55,12 @@ export default function QuizForm({ topicId }: Props) {
     setScore((prev) => (prev ?? 0) + (isCorrect ? 1 : 0));
     // Reset selection for next question
     setSelected(null);
+    // Record the user's answer at the current index
+    setUserAnswers((prev) => {
+      const updated = [...prev];
+      updated[current] = selected;
+      return updated;
+    });
     if (current + 1 < questions.length) {
       setCurrent((i) => i + 1);
     } else {
@@ -56,6 +70,42 @@ export default function QuizForm({ topicId }: Props) {
       setScore(finalScore);
       incrementQuizzes();
       gainXp(finalScore * 10);
+
+      // Persist quiz result to the backend if configured.  We send the
+      // user's answers alongside the correct answers so the Lambda can
+      // compute and store the score.  The quizId is simply the topicId
+      // which groups results by topic.  If no backend is configured
+      // (API_BASE undefined) then this call will be skipped.
+      if (API_BASE) {
+        (async () => {
+          try {
+            const user = auth.currentUser;
+            if (user) {
+              const token = await user.getIdToken();
+              // Use the collected answers; if for some reason the array is
+              // empty (should not happen) fall back to the last selected option.
+              const answers = userAnswers.length > 0 ? userAnswers : [selected];
+              const correctAnswers = questions.map((q) => q.answer);
+              const payload = {
+                userId: user.uid,
+                quizId: topicId,
+                answers,
+                correctAnswers,
+              };
+              await fetch(`${API_BASE}/submit-quiz`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(payload),
+              });
+            }
+          } catch (err) {
+            console.error('Failed to submit quiz result', err);
+          }
+        })();
+      }
     }
   }
 

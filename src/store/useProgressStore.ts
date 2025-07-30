@@ -1,4 +1,9 @@
 import { create } from 'zustand';
+import { auth } from '@/lib/firebase';
+
+// Base URL for the backend API.  The value should be set in your
+// environment (e.g. .env.local) under NEXT_PUBLIC_API_BASE_URL.
+const API_BASE: string | undefined = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 /**
  * A simple progress store that keeps track of a few metrics used by the
@@ -31,8 +36,95 @@ export const useProgressStore = create<ProgressState>((set) => ({
   quizzesTaken: 0,
   notesUploaded: 0,
   flashcardsViewed: 0,
-  gainXp: (amount) => set((state) => ({ xp: state.xp + amount })),
-  incrementQuizzes: () => set((state) => ({ quizzesTaken: state.quizzesTaken + 1 })),
-  incrementNotes: () => set((state) => ({ notesUploaded: state.notesUploaded + 1 })),
-  incrementFlashcards: () => set((state) => ({ flashcardsViewed: state.flashcardsViewed + 1 })),
+  /**
+   * Increase the XP by a specified amount and persist the update via the
+   * backend if configured.  The user's ID and token are obtained from
+   * Firebase auth; if no user is logged in or no API base is defined the
+   * update is local only.
+   */
+  gainXp: async (amount: number) => {
+    set((state) => ({ xp: state.xp + amount }));
+    if (!API_BASE) return;
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      await fetch(`${API_BASE}/progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId: user.uid, xp: amount }),
+      });
+    } catch (err) {
+      console.error('Failed to persist XP', err);
+    }
+  },
+  /**
+   * Increment the quiz counter and optionally record the activity to the backend.
+   */
+  incrementQuizzes: async () => {
+    set((state) => ({ quizzesTaken: state.quizzesTaken + 1 }));
+    if (!API_BASE) return;
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      await fetch(`${API_BASE}/progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId: user.uid, xp: 0 }),
+      });
+    } catch (err) {
+      console.error('Failed to persist quiz progress', err);
+    }
+  },
+  /**
+   * Increment the notes uploaded counter and optionally record the activity.
+   */
+  incrementNotes: async () => {
+    set((state) => ({ notesUploaded: state.notesUploaded + 1 }));
+    if (!API_BASE) return;
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      await fetch(`${API_BASE}/progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId: user.uid, xp: 0 }),
+      });
+    } catch (err) {
+      console.error('Failed to persist notes progress', err);
+    }
+  },
+  /**
+   * Increment the flashcards viewed counter and optionally record the activity.
+   */
+  incrementFlashcards: async () => {
+    set((state) => ({ flashcardsViewed: state.flashcardsViewed + 1 }));
+    if (!API_BASE) return;
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      await fetch(`${API_BASE}/progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId: user.uid, xp: 0 }),
+      });
+    } catch (err) {
+      console.error('Failed to persist flashcards progress', err);
+    }
+  },
 }));
