@@ -1,3 +1,4 @@
+"use client"
 import { QuizQuestion } from '@/types';
 import { useState } from 'react';
 
@@ -26,6 +27,7 @@ const quizData: Record<string, QuizQuestion[]> = {
 };
 
 export default function QuizForm({ topicId }: { topicId: string }) {
+
   const [selected, setSelected] = useState<string | null>(null);
   const question = quizData[topicId]?.[0];
 
